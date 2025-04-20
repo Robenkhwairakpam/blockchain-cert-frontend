@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Blockchain Certificate Verification</title>
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.8.2/dist/web3.min.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    label { display: block; margin-top: 15px; }
+    input, button { width: 100%; padding: 10px; margin-top: 5px; }
+    .output { margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h2>Verify Blockchain Certificate</h2>
+
+  <label for="certId">Certificate ID</label>
+  <input type="text" id="certId" placeholder="Enter Certificate ID...">
+  <button onclick="verifyCertificate()">Verify</button>
+
+  <div class="output" id="output"></div>
+
+  <script>
+    // Replace with your deployed contract address
+    const contractAddress = "YOUR_CONTRACT_ADDRESS_HERE";
+
+    // Replace with your contract ABI
+    const contractABI = [
+      {
+        "inputs": [
+          {
+            "internalType": "bytes32",
+            "name": "_certId",
+            "type": "bytes32"
+          }
+        ],
+        "name": "verifyCertificate",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "studentName",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "course",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "grade",
+            "type": "string"
+          },
+          {
+            "internalType": "uint256",
+            "name": "issueDate",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "isValid",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ];
+
+    async function verifyCertificate() {
+      const certIdInput = document.getElementById("certId").value;
+      const outputDiv = document.getElementById("output");
+
+      if (!certIdInput) {
+        outputDiv.innerText = "Please enter a certificate ID.";
+        return;
+      }
+
+      if (typeof window.ethereum !== 'undefined') {
+        const web3 = new Web3(window.ethereum);
+        const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+        try {
+          const certData = await contract.methods.verifyCertificate(certIdInput).call();
+          const date = new Date(certData.issueDate * 1000).toLocaleString();
+
+          outputDiv.innerHTML = `
+            <strong>Student Name:</strong> ${certData.studentName}<br>
+            <strong>Course:</strong> ${certData.course}<br>
+            <strong>Grade:</strong> ${certData.grade}<br>
+            <strong>Issued On:</strong> ${date}<br>
+            <strong>Valid:</strong> ${certData.isValid ? '✅ Yes' : '❌ Revoked'}
+          `;
+        } catch (error) {
+          outputDiv.innerText = "Error verifying certificate: " + error.message;
+        }
+      } else {
+        outputDiv.innerText = "Ethereum provider not found. Install MetaMask.";
+      }
+    }
+  </script>
+</body>
+</html>
